@@ -75,7 +75,6 @@ impl<T> Point<T> {
         Point { x, y }
     }
 }
-
 #[cfg(test)]
 mod tests {
     use super::*;
