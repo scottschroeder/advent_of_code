@@ -84,7 +84,7 @@ impl CompassRose {
                 self.inner = Some(n)
             }
         }
-        return d;
+        d
     }
 }
 
