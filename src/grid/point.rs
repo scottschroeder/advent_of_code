@@ -1,10 +1,14 @@
-use std::fmt;
-use std::ops::{Add, Mul, Sub};
-#[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct Scalar<T>(pub T);
+use std::{
+    fmt,
+    ops::{Add, Sub},
+};
+
+use super::DefaultCd;
+// #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
+// pub struct Scalar<T>(pub T);
 
 #[derive(Clone, Copy, PartialEq, Eq, Hash, PartialOrd, Ord)]
-pub struct Point<T> {
+pub struct Point<T = DefaultCd> {
     pub x: T,
     pub y: T,
 }
@@ -31,15 +35,15 @@ impl<T: Sub> Sub for Point<T> {
     }
 }
 
-impl<T: Mul + Copy> Mul<Point<T>> for Scalar<T> {
-    type Output = Point<<T as Mul>::Output>;
+// impl<T: Mul + Copy> Mul<Point<T>> for Scalar<T> {
+//     type Output = Point<<T as Mul>::Output>;
 
-    fn mul(self, rhs: Point<T>) -> Self::Output {
-        let Point { x, y } = rhs;
-        let scalar = self.0;
-        Point::new(scalar * x, scalar * y)
-    }
-}
+//     fn mul(self, rhs: Point<T>) -> Self::Output {
+//         let Point { x, y } = rhs;
+//         let scalar = self.0;
+//         Point::new(scalar * x, scalar * y)
+//     }
+// }
 
 impl<T: fmt::Debug> fmt::Debug for Point<T> {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
