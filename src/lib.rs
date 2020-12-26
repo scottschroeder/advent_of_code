@@ -11,6 +11,7 @@ pub mod grid {
 
     type DefaultCd = i64;
 }
+pub mod bitset;
 pub use self::error::Error;
 pub use crate::grid::point::Point;
 
