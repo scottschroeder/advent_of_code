@@ -4,11 +4,24 @@ use super::{
     grid_types::{BoundedGrid, FiniteGrid, GridHeight, GridWidth},
 };
 use crate::grid::point::Point;
+use std::{fmt, writeln};
 
-#[derive(Debug)]
+#[derive(Debug, Clone, PartialEq)]
 pub struct FixedGrid<T> {
-    inner: Vec<T>,
+    pub inner: Vec<T>,
     width: usize,
+}
+
+impl<T: fmt::Display> fmt::Display for FixedGrid<T> {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        for (idx, item) in self.inner.iter().enumerate() {
+            if idx != 0 && idx % self.width == 0 {
+                writeln!(f, "")?
+            }
+            write!(f, "{}", item)?
+        }
+        Ok(())
+    }
 }
 
 impl<T> BoundedGrid for FixedGrid<T> {}
@@ -57,6 +70,18 @@ impl<T> FixedGrid<T> {
         debug_assert!(idx < self.inner.len());
         idx
     }
+    pub fn maybe_point_to_idx(&self, p: Point<i64>) -> Option<usize> {
+        if p.x < 0 || p.y < 0 {
+            return None;
+        }
+        let x = p.x as usize;
+        let y = p.y as usize;
+        let idx = y * self.width + x;
+        if x >= self.width || idx >= self.inner.len() {
+            return None;
+        }
+        Some(idx)
+    }
     pub fn idx_to_point(&self, idx: usize) -> Point<i64> {
         debug_assert!(idx < self.inner.len());
         let x = idx % self.width;
@@ -75,6 +100,14 @@ impl<T> FixedGrid<T> {
 
     pub fn raw_iter(&self) -> impl Iterator<Item = &T> + '_ {
         self.inner.iter()
+    }
+
+    pub fn mut_iter(&mut self) -> impl Iterator<Item = &mut T> + '_ {
+        self.inner.iter_mut()
+    }
+
+    pub fn as_slice(&self) -> &[T] {
+        self.inner.as_slice()
     }
     pub fn parse_ascii_grid<F>(s: &str, parse_char: F) -> anyhow::Result<FixedGrid<T>>
     where
