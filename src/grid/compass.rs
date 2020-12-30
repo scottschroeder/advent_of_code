@@ -15,7 +15,7 @@ enum Spin {
 }
 
 impl Direction {
-    fn clockwise(self) -> Direction {
+    pub fn clockwise(self) -> Direction {
         match self {
             Direction::North => Direction::East,
             Direction::East => Direction::South,
@@ -23,7 +23,7 @@ impl Direction {
             Direction::West => Direction::North,
         }
     }
-    fn anticlockwise(self) -> Direction {
+    pub fn anticlockwise(self) -> Direction {
         match self {
             Direction::North => Direction::West,
             Direction::East => Direction::North,

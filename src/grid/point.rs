@@ -1,6 +1,6 @@
 use std::{
     fmt,
-    ops::{Add, Sub},
+    ops::{Add, Mul, Sub},
 };
 
 use super::DefaultCd;
@@ -11,6 +11,12 @@ use super::DefaultCd;
 pub struct Point<T = DefaultCd> {
     pub x: T,
     pub y: T,
+}
+
+impl<T: Mul<Output = T> + Copy> Point<T> {
+    pub fn scale(self, factor: T) -> Point<T> {
+        Point::new(self.x * factor, self.y * factor)
+    }
 }
 
 impl<T: Add> Add for Point<T> {
