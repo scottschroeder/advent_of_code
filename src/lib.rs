@@ -15,6 +15,30 @@ pub mod bitset;
 pub use self::error::Error;
 pub use crate::grid::point::Point;
 
+
+pub mod math {
+
+    // Returns None when the two numbers are not coprime (numbers that share no prime factors)
+    pub fn inverse_mod(a: i64, n: i64) -> Option<i64> {
+        // Also see Chinese Remainder Theorem
+        let mut mn = (n, a);
+        let mut xy = (0, 1);
+
+        while mn.1 != 0 {
+            xy = (xy.1, xy.0 - (mn.0 / mn.1) * xy.1);
+            mn = (mn.1, mn.0 % mn.1);
+        }
+
+        if mn.0 > 1 {
+            return None;
+        }
+
+        while xy.0 < 0 {
+            xy.0 += n;
+        }
+        Some(xy.0)
+    }
+}
 mod error {
     use std::fmt;
     pub struct Error(pub anyhow::Error);
