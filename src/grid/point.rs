@@ -1,6 +1,6 @@
 use std::{
     fmt,
-    ops::{Add, Mul, Sub},
+    ops::{Add, Mul, Sub, AddAssign},
 };
 
 use super::DefaultCd;
@@ -27,6 +27,13 @@ impl<T: Add> Add for Point<T> {
             x: self.x + rhs.x,
             y: self.y + rhs.y,
         }
+    }
+}
+
+impl<T: AddAssign> AddAssign for Point<T> {
+    fn add_assign(&mut self, rhs: Self) {
+        self.x += rhs.x;
+        self.y += rhs.y;
     }
 }
 
