@@ -1,5 +1,5 @@
 use anyhow::Result;
-use std::{collections::HashMap, fmt, hash::Hash};
+use std::{collections::HashMap, fmt, hash::Hash, marker::PhantomData};
 
 pub trait Class: Copy + Hash + Eq + fmt::Debug {}
 impl<T> Class for T where T: Copy + Hash + Eq + fmt::Debug {}
@@ -7,7 +7,6 @@ impl<T> Class for T where T: Copy + Hash + Eq + fmt::Debug {}
 pub trait Constraint {
     type D;
     fn apply(&self, xdomain: &mut Vec<Self::D>, ydomain: &[Self::D]) -> bool;
-    fn into_rule(self) -> Rule<Self::D>;
 }
 
 pub struct Rule<T>(Box<dyn Constraint<D = T>>);
@@ -72,6 +71,19 @@ pub struct AC3<C: Class, T> {
     data: HashMap<C, Vec<T>>,
     arcs: Arcs<C, T>,
 }
+impl<C: Class, T: 'static + PartialEq> AC3<C, T> {
+    pub fn apply_exclusivity(&mut self) {
+        let keys = self.data.keys().cloned().collect::<Vec<_>>();
+        for x in &keys {
+            for y in &keys {
+                if x == y {
+                    continue;
+                }
+                self.add_constraint(*x, *y, MembershipExclusivity::rule())
+            }
+        }
+    }
+}
 
 impl<C: Class, T: 'static> AC3<C, T> {
     pub fn add_domain<D: Into<Vec<T>>>(&mut self, class: C, domain: D) {
@@ -79,8 +91,9 @@ impl<C: Class, T: 'static> AC3<C, T> {
         self.data.insert(class, domain);
     }
 
-    pub fn add_constraint(&mut self, x: C, y: C, rule: Rule<T>) {
-        self.arcs.add_constraint(x, y, rule)
+    pub fn add_constraint<R: Constraint<D = T> + 'static>(&mut self, x: C, y: C, rule: R) {
+        let r = Rule(Box::new(rule));
+        self.arcs.add_constraint(x, y, r)
     }
 
     pub fn solve(self) -> Result<HashMap<C, Vec<T>>> {
@@ -144,21 +157,17 @@ impl<T: 'static> Constraint for MultiConstraint<T> {
         log::trace!("multi_rule modified: {:?}", modified);
         modified
     }
-
-    fn into_rule(self) -> Rule<Self::D> {
-        Rule(Box::new(self))
-    }
 }
 
 pub struct PairwiseConstraint<T>(Box<dyn Fn(&T, &T) -> bool>);
 
 impl<T: 'static + fmt::Debug> PairwiseConstraint<T> {
-    pub fn rule<F: 'static + Fn(&T, &T) -> bool>(f: F) -> Rule<T> {
-        PairwiseConstraint(Box::new(f)).into_rule()
+    pub fn rule<F: 'static + Fn(&T, &T) -> bool>(f: F) -> PairwiseConstraint<T> {
+        PairwiseConstraint(Box::new(f))
     }
 }
 
-impl<T: 'static + fmt::Debug> Constraint for PairwiseConstraint<T> {
+impl<T: fmt::Debug> Constraint for PairwiseConstraint<T> {
     type D = T;
 
     fn apply(&self, xdomain: &mut Vec<Self::D>, ydomain: &[Self::D]) -> bool {
@@ -178,9 +187,34 @@ impl<T: 'static + fmt::Debug> Constraint for PairwiseConstraint<T> {
         log::trace!("modified: {:?}", modified);
         modified
     }
+}
 
-    fn into_rule(self) -> Rule<Self::D> {
-        Rule(Box::new(self))
+pub struct MembershipExclusivity<T>(PhantomData<T>);
+
+impl<T> MembershipExclusivity<T> {
+    fn rule() -> MembershipExclusivity<T> {
+        MembershipExclusivity(PhantomData::default())
+    }
+}
+
+impl<T: PartialEq> Constraint for MembershipExclusivity<T> {
+    type D = T;
+
+    fn apply(&self, xdomain: &mut Vec<Self::D>, ydomain: &[Self::D]) -> bool {
+        if ydomain.len() != 1 {
+            return false;
+        }
+        let exclude = &ydomain[0];
+        let mut modified = false;
+        xdomain.retain(|x| {
+            if x == exclude {
+                modified = true;
+                false
+            } else {
+                true
+            }
+        });
+        modified
     }
 }
 
