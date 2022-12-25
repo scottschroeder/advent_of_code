@@ -16,6 +16,46 @@ pub mod bitset;
 pub use self::error::Error;
 pub use crate::grid::point::Point;
 
+pub mod permute;
+
+pub mod parse {
+    use anyhow::Context;
+    use std::str::FromStr;
+
+    pub fn expect_str_literal<'a, I>(iter: &mut I, expected: &'static str) -> anyhow::Result<()>
+    where
+        I: Iterator<Item = &'a str>,
+    {
+        let actual = iter
+            .next()
+            .ok_or_else(|| anyhow::anyhow!("expected {:?}, found nothing", expected))?;
+
+        if actual != expected {
+            anyhow::bail!("expected {:?}, found {:?}", expected, actual);
+        }
+
+        Ok(())
+    }
+
+    pub fn expect_parse<'a, I, T>(iter: &mut I, name: &'static str) -> anyhow::Result<T>
+    where
+        I: Iterator<Item = &'a str>,
+        T: FromStr,
+        <T as FromStr>::Err: std::fmt::Display,
+    {
+        let tp = std::any::type_name::<T>();
+        let value = iter
+            .next()
+            .ok_or_else(|| anyhow::anyhow!("expected value to parse as {}", tp))
+            .context(name)?;
+
+        value
+            .parse::<T>()
+            .map_err(|e| anyhow::anyhow!("could not parse {:?} as {}: {}", value, tp, e))
+            .context(name)
+    }
+}
+
 pub mod math {
 
     // Returns None when the two numbers are not coprime (numbers that share no prime factors)
