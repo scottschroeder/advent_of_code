@@ -198,7 +198,7 @@ impl<T: Copy> From<&Point<T>> for Point<T> {
 }
 
 impl<T> Point<T> {
-    pub fn new(x: T, y: T) -> Point<T> {
+    pub const fn new(x: T, y: T) -> Point<T> {
         Point { x, y }
     }
 }

@@ -49,9 +49,27 @@ pub mod parse {
             .ok_or_else(|| anyhow::anyhow!("expected value to parse as {}", tp))
             .context(name)?;
 
-        value
+        parse_from_str(value, name)
+    }
+
+    pub fn parse_from_str<T>(input: &str, name: &'static str) -> anyhow::Result<T>
+    where
+        T: FromStr,
+        <T as FromStr>::Err: std::fmt::Display,
+    {
+        let tp = std::any::type_name::<T>();
+        input
             .parse::<T>()
-            .map_err(|e| anyhow::anyhow!("could not parse {:?} as {}: {}", value, tp, e))
+            .map_err(|e| anyhow::anyhow!("could not parse {:?} as {}: {}", input, tp, e))
+            .context(name)
+    }
+
+    pub fn expect_word<'a, I>(iter: &mut I, name: &'static str) -> anyhow::Result<&'a str>
+    where
+        I: Iterator<Item = &'a str>,
+    {
+        iter.next()
+            .ok_or_else(|| anyhow::anyhow!("expected word but reached the end of input"))
             .context(name)
     }
 }

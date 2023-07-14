@@ -59,10 +59,21 @@ impl<Cd: Coordinate, T> std::ops::Index<Point<Cd>> for FixedGrid<T> {
     }
 }
 
+impl<Cd: Coordinate, T> std::ops::IndexMut<Point<Cd>> for FixedGrid<T> {
+    fn index_mut(&mut self, index: Point<Cd>) -> &mut Self::Output {
+        let x = index.x.to_usize();
+        let y = index.y.to_usize();
+        debug_assert!(x < self.width);
+        let idx = y * self.width + x;
+        debug_assert!(idx < self.inner.len());
+        &mut self.inner[idx]
+    }
+}
+
 impl<T> FixedGrid<T> {
     pub fn point_to_idx(&self, p: Point<i64>) -> usize {
-        debug_assert!(p.x > 0);
-        debug_assert!(p.y > 0);
+        debug_assert!(p.x >= 0);
+        debug_assert!(p.y >= 0);
         let x = p.x as usize;
         let y = p.y as usize;
         debug_assert!(x < self.width);
@@ -104,6 +115,13 @@ impl<T> FixedGrid<T> {
 
     pub fn mut_iter(&mut self) -> impl Iterator<Item = &mut T> + '_ {
         self.inner.iter_mut()
+    }
+
+    pub fn points(&self) -> impl Iterator<Item = Point<i64>> + '_ {
+        self.inner
+            .iter()
+            .enumerate()
+            .map(move |(idx, _)| self.idx_to_point(idx))
     }
 
     pub fn as_slice(&self) -> &[T] {
